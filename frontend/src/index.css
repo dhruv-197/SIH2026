@@ -1,0 +1,179 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+@theme {
+  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-display: "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+
+  --color-ink: #0f172a;
+  --color-ink-2: #334155;
+  --color-muted: #64748b;
+  --color-line: #e2e8f0;
+  --color-line-strong: #cbd5e1;
+  --color-ground: #f3f6fb;
+  --color-panel: #ffffff;
+  --color-sunk: #f1f5f9;
+  --color-accent: #2453c9;
+  --color-accent-strong: #1c43a6;
+  --color-accent-soft: #e8eefc;
+
+  /* Brand: the navy of the sidebar and logo tile, and the flame of the logo mark. */
+  --color-brand: #0b1d3a;
+  --color-brand-2: #13294d;
+  --color-flame: #f97316;
+
+  --color-industrial: #6d28d9;
+  --color-vegetation: #15803d;
+
+  --color-crit: #c0262d;
+  --color-crit-soft: #fdecec;
+  --color-warn: #a15c07;
+  --color-warn-soft: #fdf2df;
+  --color-good: #15803d;
+  --color-good-soft: #e5f4ea;
+
+  /* Rounder corners everywhere that uses the named radius sizes. */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.5rem;
+
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 2px 8px rgb(15 23 42 / 0.04);
+  --shadow-float: 0 10px 30px rgb(15 23 42 / 0.14), 0 2px 8px rgb(15 23 42 / 0.08);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: #c7d7fb;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+input[type="range"],
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-accent);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  width: 1rem;
+  height: 1rem;
+}
+
+details > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.leaflet-container {
+  font-family: var(--font-sans);
+  background: #dfe7ef;
+}
+
+.leaflet-tooltip {
+  border-radius: 10px;
+  border-color: var(--color-line);
+  box-shadow: var(--shadow-float);
+  padding: 6px 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-ink);
+}
+
+.leaflet-bar {
+  border: 0 !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: var(--shadow-float) !important;
+}
+
+.leaflet-bar a {
+  width: 38px !important;
+  height: 38px !important;
+  line-height: 38px !important;
+  color: var(--color-ink) !important;
+  border-bottom-color: var(--color-line) !important;
+}
+
+.leaflet-control-attribution {
+  border-radius: 8px 0 0 0;
+  font-size: 11.5px;
+}
+
+/* Map page: Leaflet's own controls sit below the floating toolbar and to the left of the detection list. */
+.map-shell .leaflet-top {
+  top: 64px;
+}
+
+@media (min-width: 768px) {
+  .map-shell.map-list-open .leaflet-right {
+    right: 376px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  .print-sheet {
+    box-shadow: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+}

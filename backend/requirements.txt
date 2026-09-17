@@ -1,0 +1,19 @@
+# Compatible ranges. The exact versions the project was tested with are in requirements-lock.txt.
+# The trained model (ml/model_bundle.joblib) was written with XGBoost 3 / scikit-learn 1.x; after a major
+# version change retrain it with: py backend/ml/train.py
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+pydantic>=2.7,<3
+python-multipart>=0.0.9
+SQLAlchemy>=2.0,<3
+httpx>=0.27,<1
+APScheduler>=3.10,<4
+PyJWT>=2.8,<3
+numpy>=1.26,<3
+pandas>=2.2,<4
+scipy>=1.11,<2
+scikit-learn>=1.5,<2
+xgboost>=3.0,<4
+joblib>=1.3,<2
+Shapely>=2.0,<3
+pytest>=8.0,<10

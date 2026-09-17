@@ -1,0 +1,515 @@
+{
+  "model": {
+    "version": "2.2.0",
+    "trained_at": "2026-09-15T14:04:20+00:00",
+    "algorithm": "XGBoost gradient-boosted trees (multi:softprob, 450 trees, depth 6), class-balanced weights",
+    "training_data": "299466 physics-simulated detections from 2916 scenes across 18 scenario families"
+  },
+  "important_caveat": "Accuracy below is measured on held-out simulated scenes. It shows the method works when the physics assumptions hold; it is not a field-validated accuracy on real Indian detections. See 'real_data_checks'.",
+  "simulation": {
+    "method": "Out-of-fold predictions, GroupKFold by simulated scene (no site appears in both training and validation)",
+    "scenes": 2916,
+    "detections": 299466,
+    "folds": 5,
+    "category_accuracy": 0.9959,
+    "class_accuracy": 0.9319,
+    "class_macro_f1": 0.9352,
+    "category_confusion": {
+      "labels": [
+        "industrial",
+        "vegetation"
+      ],
+      "matrix": [
+        [
+          232403,
+          777
+        ],
+        [
+          450,
+          65836
+        ]
+      ]
+    },
+    "class_confusion": {
+      "labels": [
+        "gas_flare",
+        "heavy_industry",
+        "mining_coal_fire",
+        "wildfire",
+        "agricultural"
+      ],
+      "matrix": [
+        [
+          48408,
+          7384,
+          292,
+          211,
+          99
+        ],
+        [
+          6775,
+          107020,
+          1156,
+          135,
+          160
+        ],
+        [
+          452,
+          1598,
+          59318,
+          81,
+          91
+        ],
+        [
+          73,
+          92,
+          147,
+          48126,
+          1103
+        ],
+        [
+          39,
+          67,
+          32,
+          411,
+          16196
+        ]
+      ]
+    },
+    "per_class": {
+      "gas_flare": {
+        "precision": 0.8684,
+        "recall": 0.8584,
+        "f1": 0.8633,
+        "support": 56394
+      },
+      "heavy_industry": {
+        "precision": 0.9213,
+        "recall": 0.9286,
+        "f1": 0.925,
+        "support": 115246
+      },
+      "mining_coal_fire": {
+        "precision": 0.9733,
+        "recall": 0.9639,
+        "f1": 0.9686,
+        "support": 61540
+      },
+      "wildfire": {
+        "precision": 0.9829,
+        "recall": 0.9714,
+        "f1": 0.9771,
+        "support": 49541
+      },
+      "agricultural": {
+        "precision": 0.9177,
+        "recall": 0.9672,
+        "f1": 0.9418,
+        "support": 16745
+      }
+    },
+    "by_evidence": {
+      "single_day_location": {
+        "detections": 36751,
+        "category_accuracy": 0.9872
+      },
+      "recurring_location": {
+        "detections": 262715,
+        "category_accuracy": 0.9971
+      }
+    },
+    "verification_policy": {
+      "flag_rate": 0.0127,
+      "category_accuracy_when_not_flagged": 0.9978,
+      "category_accuracy_when_flagged": 0.8499
+    },
+    "calibration": {
+      "category_expected_calibration_error": 0.0007,
+      "industrial_probability_brier_score": 0.0032
+    },
+    "per_family": {
+      "brick_kilns_cropland": {
+        "detections": 29735,
+        "class_accuracy": 0.9479,
+        "category_accuracy": 0.9968,
+        "verification_flag_rate": 0.0114,
+        "hard_case": true
+      },
+      "coal_fire_mapped": {
+        "detections": 43468,
+        "class_accuracy": 0.999,
+        "category_accuracy": 0.9993,
+        "verification_flag_rate": 0.0029,
+        "hard_case": false
+      },
+      "coal_fire_unmapped": {
+        "detections": 18072,
+        "class_accuracy": 0.8795,
+        "category_accuracy": 0.9921,
+        "verification_flag_rate": 0.0143,
+        "hard_case": true
+      },
+      "crop_burning": {
+        "detections": 9249,
+        "class_accuracy": 0.9555,
+        "category_accuracy": 0.9881,
+        "verification_flag_rate": 0.0395,
+        "hard_case": false
+      },
+      "crop_burning_near_industry": {
+        "detections": 5830,
+        "class_accuracy": 0.9875,
+        "category_accuracy": 0.9976,
+        "verification_flag_rate": 0.0381,
+        "hard_case": true
+      },
+      "flare_refinery_mapped": {
+        "detections": 19862,
+        "class_accuracy": 0.9977,
+        "category_accuracy": 0.9997,
+        "verification_flag_rate": 0.0032,
+        "hard_case": false
+      },
+      "flare_unmapped": {
+        "detections": 16717,
+        "class_accuracy": 0.5835,
+        "category_accuracy": 0.9984,
+        "verification_flag_rate": 0.0075,
+        "hard_case": true
+      },
+      "flare_upset_mapped": {
+        "detections": 1763,
+        "class_accuracy": 0.9064,
+        "category_accuracy": 0.9518,
+        "verification_flag_rate": 0.0834,
+        "hard_case": false
+      },
+      "flare_upset_unmapped": {
+        "detections": 824,
+        "class_accuracy": 0.7573,
+        "category_accuracy": 0.8083,
+        "verification_flag_rate": 0.3325,
+        "hard_case": true
+      },
+      "forest_fire": {
+        "detections": 28473,
+        "class_accuracy": 0.9615,
+        "category_accuracy": 0.9939,
+        "verification_flag_rate": 0.0165,
+        "hard_case": false
+      },
+      "forest_fire_near_industry": {
+        "detections": 11296,
+        "class_accuracy": 0.9907,
+        "category_accuracy": 0.9973,
+        "verification_flag_rate": 0.0345,
+        "hard_case": true
+      },
+      "grass_scrub_fire": {
+        "detections": 9329,
+        "class_accuracy": 0.9884,
+        "category_accuracy": 0.9995,
+        "verification_flag_rate": 0.0077,
+        "hard_case": false
+      },
+      "heavy_plant_mapped": {
+        "detections": 58051,
+        "class_accuracy": 0.9992,
+        "category_accuracy": 0.9994,
+        "verification_flag_rate": 0.002,
+        "hard_case": false
+      },
+      "heavy_plant_unmapped": {
+        "detections": 27253,
+        "class_accuracy": 0.76,
+        "category_accuracy": 0.9961,
+        "verification_flag_rate": 0.0068,
+        "hard_case": true
+      },
+      "industrial_fire_mapped": {
+        "detections": 412,
+        "class_accuracy": 0.7743,
+        "category_accuracy": 0.8495,
+        "verification_flag_rate": 0.1117,
+        "hard_case": true
+      },
+      "oil_field_wells": {
+        "detections": 17023,
+        "class_accuracy": 0.9645,
+        "category_accuracy": 0.9983,
+        "verification_flag_rate": 0.0108,
+        "hard_case": false
+      },
+      "plantation_burning": {
+        "detections": 1666,
+        "class_accuracy": 0.9616,
+        "category_accuracy": 0.9916,
+        "verification_flag_rate": 0.0522,
+        "hard_case": true
+      },
+      "vegetation_fire_on_premises": {
+        "detections": 443,
+        "class_accuracy": 0.7585,
+        "category_accuracy": 0.772,
+        "verification_flag_rate": 0.7652,
+        "hard_case": true
+      }
+    }
+  },
+  "feature_importance_gain": [
+    {
+      "feature": "inside_industrial",
+      "gain": 300.28
+    },
+    {
+      "feature": "dist_mining_km",
+      "gain": 267.27
+    },
+    {
+      "feature": "detections_750m",
+      "gain": 207.85
+    },
+    {
+      "feature": "dist_oil_gas_km",
+      "gain": 175.74
+    },
+    {
+      "feature": "persistence_days",
+      "gain": 142.98
+    },
+    {
+      "feature": "dist_heavy_industry_km",
+      "gain": 123.09
+    },
+    {
+      "feature": "lc_crop",
+      "gain": 115.1
+    },
+    {
+      "feature": "lc_bare",
+      "gain": 85.47
+    },
+    {
+      "feature": "event_cells_5km",
+      "gain": 82.64
+    },
+    {
+      "feature": "persistence_ratio",
+      "gain": 78.6
+    },
+    {
+      "feature": "isolation_other_cells_5km",
+      "gain": 77.97
+    },
+    {
+      "feature": "night_fraction_750m",
+      "gain": 68.28
+    },
+    {
+      "feature": "is_modis",
+      "gain": 52.91
+    },
+    {
+      "feature": "concurrent_pixels_2km",
+      "gain": 38.19
+    },
+    {
+      "feature": "lc_built",
+      "gain": 35.35
+    },
+    {
+      "feature": "lc_shrub_grass",
+      "gain": 18.28
+    },
+    {
+      "feature": "event_days_5km",
+      "gain": 18.18
+    },
+    {
+      "feature": "lc_tree",
+      "gain": 17.92
+    },
+    {
+      "feature": "frp_median_750m_log",
+      "gain": 17.39
+    },
+    {
+      "feature": "frp_cv_750m",
+      "gain": 16.25
+    }
+  ],
+  "scenario_families": {
+    "flare_refinery_mapped": {
+      "weight": 1.0,
+      "hard_case": false
+    },
+    "flare_unmapped": {
+      "weight": 0.8,
+      "hard_case": true
+    },
+    "flare_upset_mapped": {
+      "weight": 0.6,
+      "hard_case": false
+    },
+    "flare_upset_unmapped": {
+      "weight": 0.3,
+      "hard_case": true
+    },
+    "oil_field_wells": {
+      "weight": 0.6,
+      "hard_case": false
+    },
+    "heavy_plant_mapped": {
+      "weight": 1.0,
+      "hard_case": false
+    },
+    "heavy_plant_unmapped": {
+      "weight": 0.6,
+      "hard_case": true
+    },
+    "industrial_fire_mapped": {
+      "weight": 0.4,
+      "hard_case": true
+    },
+    "brick_kilns_cropland": {
+      "weight": 0.7,
+      "hard_case": true
+    },
+    "coal_fire_mapped": {
+      "weight": 0.9,
+      "hard_case": false
+    },
+    "coal_fire_unmapped": {
+      "weight": 0.5,
+      "hard_case": true
+    },
+    "forest_fire": {
+      "weight": 1.0,
+      "hard_case": false
+    },
+    "forest_fire_near_industry": {
+      "weight": 0.7,
+      "hard_case": true
+    },
+    "vegetation_fire_on_premises": {
+      "weight": 0.35,
+      "hard_case": true
+    },
+    "grass_scrub_fire": {
+      "weight": 0.5,
+      "hard_case": false
+    },
+    "crop_burning": {
+      "weight": 1.0,
+      "hard_case": false
+    },
+    "crop_burning_near_industry": {
+      "weight": 0.7,
+      "hard_case": true
+    },
+    "plantation_burning": {
+      "weight": 0.4,
+      "hard_case": true
+    }
+  },
+  "real_data_checks": {
+    "method": "Checks of the classifier on real FIRMS detections against independent evidence.\n\nThere are no ground-truth source labels for Indian FIRMS detections, so this script uses\n*proxy* labels built from evidence the model can be tested without, and ablations that remove\nthat evidence from the model input:\n\nA. Mapped industrial sites: detections recurring on >= 3 days inside a mapped OSM industrial or\n   mining polygon (or within 500 m of a mapped flare/well/kiln point). Expected: industrial.\n   Ablation: the same detections with all map features removed - does the model still say\n   industrial from persistence and radiometry alone (the situation at unmapped facilities)?\nB. Vegetation-dominated footprints far from industry: WorldCover tree or cropland >= 60 %,\n   >= 10 km from any mapped industrial feature, single-day location. Expected: vegetation.\n   Ablation: land cover removed.\nC. NASA's static-source flag (archive files only): FIRMS standard-processing records carry a\n   \"type\" - 2 for \"other static land source\" (persistent heat such as flares, furnaces and\n   kilns) and 0 for \"presumed vegetation fire\". NASA derives it from how often a location has\n   burned over the years, independently of our maps and land cover. Industrial sites without a\n   long record stay \"presumed vegetation\" in it, so it is a second opinion, not ground truth.\n\nProxy labels are not ground truth: set A is biased towards well-mapped sites, set B towards\nclear-cut landscapes. The numbers show consistency with independent evidence, not field accuracy.",
+    "detections_evaluated": 3722,
+    "observation_window": {
+      "start": "2026-09-07",
+      "end": "2026-09-14",
+      "days": 8
+    },
+    "dataset_label": null,
+    "predicted_category_distribution": {
+      "vegetation": 1183,
+      "industrial": 2539
+    },
+    "A_mapped_industrial_sites": {
+      "detections": 1276,
+      "feature_subtypes": {
+        "coal_mine": 579,
+        "steel": 624,
+        "refinery": 23,
+        "cement": 43,
+        "thermal_power": 7
+      },
+      "share_predicted_industrial": 0.9976,
+      "ablation_without_map_features_share_industrial": 0.9929
+    },
+    "B_vegetation_far_from_industry": {
+      "detections": 465,
+      "share_predicted_vegetation": 1.0,
+      "ablation_without_landcover_share_vegetation": 0.9978
+    },
+    "summary": {
+      "mapped_industrial_agreement": 0.9976,
+      "mapped_industrial_agreement_without_maps": 0.9929,
+      "vegetation_agreement": 1.0,
+      "vegetation_agreement_without_landcover": 0.9978,
+      "sample_sizes": {
+        "A": 1276,
+        "B": 465
+      }
+    }
+  },
+  "archive_data_checks": {
+    "method": "Checks of the classifier on real FIRMS detections against independent evidence.\n\nThere are no ground-truth source labels for Indian FIRMS detections, so this script uses\n*proxy* labels built from evidence the model can be tested without, and ablations that remove\nthat evidence from the model input:\n\nA. Mapped industrial sites: detections recurring on >= 3 days inside a mapped OSM industrial or\n   mining polygon (or within 500 m of a mapped flare/well/kiln point). Expected: industrial.\n   Ablation: the same detections with all map features removed - does the model still say\n   industrial from persistence and radiometry alone (the situation at unmapped facilities)?\nB. Vegetation-dominated footprints far from industry: WorldCover tree or cropland >= 60 %,\n   >= 10 km from any mapped industrial feature, single-day location. Expected: vegetation.\n   Ablation: land cover removed.\nC. NASA's static-source flag (archive files only): FIRMS standard-processing records carry a\n   \"type\" - 2 for \"other static land source\" (persistent heat such as flares, furnaces and\n   kilns) and 0 for \"presumed vegetation fire\". NASA derives it from how often a location has\n   burned over the years, independently of our maps and land cover. Industrial sites without a\n   long record stay \"presumed vegetation\" in it, so it is a second opinion, not ground truth.\n\nProxy labels are not ground truth: set A is biased towards well-mapped sites, set B towards\nclear-cut landscapes. The numbers show consistency with independent evidence, not field accuracy.",
+    "detections_evaluated": 7421,
+    "observation_window": {
+      "start": "2024-04-24",
+      "end": "2024-04-30",
+      "days": 7
+    },
+    "dataset_label": null,
+    "predicted_category_distribution": {
+      "vegetation": 6119,
+      "industrial": 1302
+    },
+    "A_mapped_industrial_sites": {
+      "detections": 803,
+      "feature_subtypes": {
+        "coal_mine": 527,
+        "steel": 265,
+        "kiln": 1,
+        "cement": 5,
+        "refinery": 1,
+        "thermal_power": 4
+      },
+      "share_predicted_industrial": 1.0,
+      "ablation_without_map_features_share_industrial": 0.9988
+    },
+    "B_vegetation_far_from_industry": {
+      "detections": 3518,
+      "share_predicted_vegetation": 0.998,
+      "ablation_without_landcover_share_vegetation": 0.9903
+    },
+    "summary": {
+      "mapped_industrial_agreement": 1.0,
+      "mapped_industrial_agreement_without_maps": 0.9988,
+      "vegetation_agreement": 0.998,
+      "vegetation_agreement_without_landcover": 0.9903,
+      "sample_sizes": {
+        "A": 803,
+        "B": 3518,
+        "C_static": 1084,
+        "C_presumed_vegetation": 6327
+      },
+      "nasa_static_source_agreement": 0.988,
+      "nasa_presumed_vegetation_agreement": 0.9655
+    },
+    "C_nasa_static_source_flag": {
+      "static_land_source": {
+        "detections": 1084,
+        "share_model_industrial": 0.9862,
+        "share_shown_industrial": 0.988
+      },
+      "presumed_vegetation_fire": {
+        "detections": 6327,
+        "share_model_vegetation": 0.9643,
+        "share_shown_vegetation": 0.9655
+      },
+      "note": "'model' is the classifier on each detection; 'shown' is the category in the dashboard, where persistent sources are decided on all their detections together."
+    }
+  }
+}

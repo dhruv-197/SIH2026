@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="tile" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1e40af"/>
+      <stop offset="1" stop-color="#0b1d3a"/>
+    </linearGradient>
+    <linearGradient id="flame" x1="32" y1="47" x2="32" y2="9" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ea580c"/>
+      <stop offset="0.55" stop-color="#f97316"/>
+      <stop offset="1" stop-color="#fbbf24"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="url(#tile)"/>
+  <path d="M11 45a21 6.5 0 0 1 42 0" fill="none" stroke="#60a5fa" stroke-width="2.6" stroke-linecap="round" opacity="0.55"/>
+  <path d="M32 9c1.6 7.4 11.5 12 11.5 24.3C43.5 40.4 38.4 46 32 46s-11.5-5.6-11.5-12.4c0-5.6 3.2-9.3 6-12.4.6 3.6 2.5 6.1 5 7.1C30 23.6 29.6 15.6 32 9z" fill="url(#flame)"/>
+  <path d="M32 29.5c1.2 3.4 5 5 5 9.2 0 3.3-2.3 5.6-5 5.6s-5-2.3-5-5.3c0-2.7 1.8-4.3 3.1-6 .4 1.4 1.1 2.2 2.1 2.5-.6-2-.7-4 .1-6z" fill="#fff7ed" opacity="0.9"/>
+  <path d="M11 45a21 6.5 0 0 0 42 0" fill="none" stroke="#93c5fd" stroke-width="2.6" stroke-linecap="round"/>
+  <circle cx="51.4" cy="42.4" r="2.8" fill="#dbeafe"/>
+</svg>

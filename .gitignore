@@ -1,0 +1,145 @@
+# ==============================================================================
+# GeoThermal Sentinel - Git Ignore Configuration
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Operating System & File System Artifacts
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+ehthumbs_vista.db
+Thumbs.db
+Thumbs.db:encryptable
+Desktop.ini
+$RECYCLE.BIN/
+
+# ------------------------------------------------------------------------------
+# IDEs, Code Editors & Tooling
+# ------------------------------------------------------------------------------
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-project
+*.sublime-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.swo
+*~
+.claude/
+
+# ------------------------------------------------------------------------------
+# Python & Bytecode
+# ------------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+/build/
+/dist/
+backend/build/
+backend/dist/
+downloads/
+eggs/
+.eggs/
+share/python-wheels/
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing, Coverage & Type Checking
+.pytest_cache/
+backend/.pytest_cache/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+htmlcov/
+.tox/
+.nox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+
+# ------------------------------------------------------------------------------
+# Node.js & Frontend Tooling
+# ------------------------------------------------------------------------------
+node_modules/
+frontend/node_modules/
+.npm/
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+
+# Frontend build caches & SSR artifacts
+.vite/
+frontend/.vite/
+dist-ssr/
+frontend/dist-ssr/
+
+# Node debug and process logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Note on frontend/dist:
+# frontend/dist is intentionally tracked so the FastAPI backend can serve
+# the full compiled dashboard out-of-the-box without requiring Node.js.
+
+# ------------------------------------------------------------------------------
+# SQLite & Database Lock / Temporary Files
+# ------------------------------------------------------------------------------
+# Note: Primary databases (geothermal.db, geothermal_sentinel.gpkg) are kept
+# so the system boots offline with pre-ingested FIRMS and ESA WorldCover baseline.
+# Only transient runtime WAL, SHM, and temporary lock files are excluded.
+*.db-wal
+*.db-shm
+*.db-journal
+*.tmp
+backend/app/data/*.db-wal
+backend/app/data/*.db-shm
+backend/app/data/gis/*.tmp
+backend/app/data/archive/*/*.db-wal
+backend/app/data/archive/*/*.db-shm
+backend/app/data/archive/*/gis/*.tmp
+
+# ------------------------------------------------------------------------------
+# Environment Variables & Secrets
+# ------------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.env
+*.pem
+*.key
+*.cert
+*.crt
