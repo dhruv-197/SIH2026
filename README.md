@@ -347,4 +347,4 @@ Main API routes (all under `/api`): `health`, `detections` (+ `/export.geojson`,
 NASA FIRMS (LANCE / EOSDIS; near-real-time feed and archive country files) · OpenStreetMap contributors, ODbL 1.0 ·
 ESA WorldCover 2021 v200 (CC BY 4.0) and Copernicus Sentinel-2 data via Microsoft Planetary Computer · Weather data by
 Open-Meteo.com (CC BY 4.0), ERA5 from the Copernicus Climate Change Service · Natural Earth (public domain) · NASA GIBS ·
-Esri World Imagery · CARTO basemaps.
+Esri World Imagery · Esri Light Gray Canvas.

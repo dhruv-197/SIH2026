@@ -35,7 +35,7 @@ const INK = "#0f172a";
 const CRITICAL = "#c0262d";
 const HIGH = "#c2410c";
 
-function tileLayer(basemap: Basemap, date?: string): L.TileLayer {
+function tileLayer(basemap: Basemap, date?: string): L.Layer {
   if (basemap === "satellite") {
     return L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
       maxZoom: 19,
@@ -48,11 +48,29 @@ function tileLayer(basemap: Basemap, date?: string): L.TileLayer {
       { maxZoom: 9, maxNativeZoom: 9, attribution: `NASA GIBS · VIIRS Suomi NPP true colour ${date}` },
     );
   }
-  return L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-    maxZoom: 19,
-    subdomains: "abcd",
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
-  });
+  // CARTO's free CDN now stamps "API KEY REQUIRED" on every tile. Esri's light canvas needs no key.
+  return L.layerGroup([
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+      maxZoom: 16,
+      attribution: 'Tiles © <a href="https://www.esri.com">Esri</a> — Esri, HERE, Garmin, © OpenStreetMap contributors',
+    }),
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}", {
+      maxZoom: 16,
+    }),
+  ]);
+}
+
+function sendBasemapToBack(layer: L.Layer) {
+  if (layer instanceof L.LayerGroup) {
+    const tiles: L.GridLayer[] = [];
+    layer.eachLayer((child) => {
+      if (child instanceof L.GridLayer) tiles.push(child);
+    });
+    // bringToBack on the base last so it sits under the label tiles.
+    for (const tile of [...tiles].reverse()) tile.bringToBack();
+    return;
+  }
+  if (layer instanceof L.GridLayer) layer.bringToBack();
 }
 
 /** The Leaflet map. Filters, legend, layer menu and detection list are drawn over it by the Map page. */
@@ -60,7 +78,7 @@ export function MapView(props: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const rendererRef = useRef<L.Canvas | null>(null);
-  const baseRef = useRef<L.TileLayer | null>(null);
+  const baseRef = useRef<L.Layer | null>(null);
   const regionLayer = useRef<L.LayerGroup | null>(null);
   const detectionLayer = useRef<L.LayerGroup | null>(null);
   const sourceLayer = useRef<L.LayerGroup | null>(null);
@@ -101,7 +119,7 @@ export function MapView(props: Props) {
     if (!map) return;
     if (baseRef.current) map.removeLayer(baseRef.current);
     baseRef.current = tileLayer(props.basemap, props.imageryDate).addTo(map);
-    baseRef.current.bringToBack();
+    sendBasemapToBack(baseRef.current);
   }, [props.basemap, props.imageryDate]);
 
   const regionKey = props.regionBox ? props.regionBox.join(",") : "";
