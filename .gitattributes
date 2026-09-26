@@ -1,0 +1,10 @@
+# Bundled databases, GeoPackage layer store, trained model and images: binary (no text diffs, no line-ending changes)
+*.db      binary
+*.gpkg    binary
+*.joblib  binary
+*.jpg     binary
+*.png     binary
+
+# The compiled dashboard served by the API: generated code, so GitHub collapses its diffs
+# and leaves it out of the repository's language statistics
+frontend/dist/** linguist-generated=true

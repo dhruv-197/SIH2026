@@ -36,6 +36,8 @@ $RECYCLE.BIN/
 *.swp
 *.swo
 *~
+*.bak
+~$*
 .claude/
 
 # ------------------------------------------------------------------------------
@@ -124,6 +126,9 @@ lerna-debug.log*
 *.db-wal
 *.db-shm
 *.db-journal
+*.gpkg-wal
+*.gpkg-shm
+*.gpkg-journal
 *.tmp
 backend/app/data/*.db-wal
 backend/app/data/*.db-shm

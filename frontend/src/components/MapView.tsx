@@ -35,6 +35,40 @@ const INK = "#0f172a";
 const CRITICAL = "#c0262d";
 const HIGH = "#c2410c";
 
+// L.geoJSON hands its options to every path it creates, so `renderer` works there; Leaflet's typings just omit it.
+type GeoJSONPathOptions = L.GeoJSONOptions & Pick<L.PathOptions, "renderer">;
+
+function markerRadius(frp: number): number {
+  return Math.max(4, Math.min(12, 3 + Math.sqrt(frp)));
+}
+
+type DotMarker = L.CircleMarker & { detectionId: string };
+
+/** The dot under the cursor. A second click on the same stack selects the next dot. */
+function detectionAt(map: L.Map | null, layer: L.LayerGroup | null, latlng: L.LatLng, selectedId: string | null): string | null {
+  if (!map || !layer) return null;
+  const point = map.latLngToContainerPoint(latlng);
+  const hits: { id: string; dist: number }[] = [];
+  layer.eachLayer((child) => {
+    const dot = child as DotMarker;
+    if (!dot.detectionId) return;
+    const center = map.latLngToContainerPoint(dot.getLatLng());
+    const dist = Math.hypot(center.x - point.x, center.y - point.y);
+    if (dist <= dot.getRadius() + 6) hits.push({ id: dot.detectionId, dist });
+  });
+  if (!hits.length) return null;
+  hits.sort((a, b) => a.dist - b.dist);
+  const current = hits.findIndex((hit) => hit.id === selectedId);
+  if (current === -1) return hits[0].id;
+  return hits[(current + 1) % hits.length].id;
+}
+
+function raiseDots(layer: L.LayerGroup | null) {
+  layer?.eachLayer((child) => {
+    if (child instanceof L.Path) child.bringToFront();
+  });
+}
+
 function tileLayer(basemap: Basemap, date?: string): L.Layer {
   if (basemap === "satellite") {
     return L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
@@ -95,9 +129,10 @@ export function MapView(props: Props) {
   // Create the map once. The zoom buttons sit top right, clear of the filter card.
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
-    const map = L.map(containerRef.current, { center: [22.8, 80.5], zoom: 5, preferCanvas: true, zoomControl: false });
+    const renderer = L.canvas({ padding: 0.5 });
+    rendererRef.current = renderer;
+    const map = L.map(containerRef.current, { center: [22.8, 80.5], zoom: 5, zoomControl: false, renderer });
     L.control.zoom({ position: "topright" }).addTo(map);
-    rendererRef.current = L.canvas({ padding: 0.5 });
     regionLayer.current = L.layerGroup().addTo(map);
     osmLayer.current = L.layerGroup().addTo(map);
     facilityLayer.current = L.layerGroup().addTo(map);
@@ -125,7 +160,8 @@ export function MapView(props: Props) {
   const regionKey = props.regionBox ? props.regionBox.join(",") : "";
   useEffect(() => {
     const layer = regionLayer.current;
-    if (!layer) return;
+    const renderer = rendererRef.current;
+    if (!layer || !renderer) return;
     layer.clearLayers();
     if (!regionKey) return;
     const [west, south, east, north] = regionKey.split(",").map(Number);
@@ -134,7 +170,7 @@ export function MapView(props: Props) {
         [south, west],
         [north, east],
       ],
-      { color: "#2453c9", weight: 1.8, dashArray: "6 4", fill: false, interactive: false },
+      { renderer, color: "#2453c9", weight: 1.8, dashArray: "6 4", fill: false, interactive: false },
     ).addTo(layer);
   }, [regionKey]);
 
@@ -142,20 +178,23 @@ export function MapView(props: Props) {
     const layer = detectionLayer.current;
     const renderer = rendererRef.current;
     if (!layer || !renderer) return;
+    const map = mapRef.current;
     layer.clearLayers();
+    const dots: DotMarker[] = [];
     for (const d of props.detections) {
       const meta = CLASS_META[d.class_code];
       const critical = d.severity === "CRITICAL";
       const high = d.severity === "HIGH";
       const marker = L.circleMarker([d.latitude, d.longitude], {
         renderer,
-        radius: Math.max(4, Math.min(12, 3 + Math.sqrt(d.frp))),
+        radius: markerRadius(d.frp),
         color: critical ? CRITICAL : high ? HIGH : "#ffffff",
         weight: critical || high ? 2.6 : 1,
         fillColor: meta?.color ?? "#64748b",
         fillOpacity: 0.9,
         dashArray: d.verification_required && !d.review_label ? "3 2" : undefined,
-      });
+      }) as DotMarker;
+      marker.detectionId = d.detection_id;
       marker.bindTooltip(
         `<b>${escapeHtml(meta?.short)}</b>${d.verification_required && !d.review_label ? " · needs verification" : ""}<br/>` +
           `FRP ${d.frp.toFixed(1)} MW · ${fmtUtc(d.acq_datetime, false)}` +
@@ -164,9 +203,15 @@ export function MapView(props: Props) {
           (d.place ? `<br/><span style="color:#64748b">${escapeHtml(d.place)}</span>` : ""),
         { direction: "top", sticky: true },
       );
-      marker.on("click", () => handlers.current.onSelectDetection(d.detection_id));
+      marker.on("click", (event) => {
+        L.DomEvent.stopPropagation(event.originalEvent);
+        const id = detectionAt(map, layer, event.latlng, handlers.current.selectedId);
+        handlers.current.onSelectDetection(id ?? d.detection_id);
+      });
       layer.addLayer(marker);
+      dots.push(marker);
     }
+    for (const marker of dots) marker.bringToFront();
   }, [props.detections]);
 
   useEffect(() => {
@@ -177,6 +222,7 @@ export function MapView(props: Props) {
     for (const s of props.sources) {
       const meta = CLASS_META[s.class_code];
       const ring = L.circle([s.latitude, s.longitude], {
+        renderer: rendererRef.current ?? undefined,
         radius: Math.max(500, s.extent_km * 1000 + 300),
         color: meta?.color ?? "#333",
         weight: 1.8,
@@ -187,9 +233,18 @@ export function MapView(props: Props) {
         `<b>Persistent source</b> · ${escapeHtml(meta?.short)}<br/>${s.active_days} of ${s.observation_days} days · ${s.detection_count} detections<br/>median FRP ${s.frp_median.toFixed(1)} MW`,
         { direction: "top", sticky: true },
       );
-      ring.on("click", () => handlers.current.onSelectSource?.(s.id));
+      ring.on("click", (event) => {
+        const dot = detectionAt(mapRef.current, detectionLayer.current, event.latlng, handlers.current.selectedId);
+        if (dot) {
+          L.DomEvent.stopPropagation(event.originalEvent);
+          handlers.current.onSelectDetection(dot);
+          return;
+        }
+        handlers.current.onSelectSource?.(s.id);
+      });
       layer.addLayer(ring);
     }
+    raiseDots(detectionLayer.current);
   }, [props.sources, props.layers.sources]);
 
   useEffect(() => {
@@ -205,16 +260,27 @@ export function MapView(props: Props) {
         `<br/><span style="color:#64748b">${f.osm_element_id ? `OSM ${escapeHtml(f.osm_element_id)}` : "catalog location (not matched in OSM)"}</span>`;
       let shape: L.Layer;
       if (f.geometry) {
-        shape = L.geoJSON(f.geometry as GeoJSON.GeoJsonObject, {
+        const outline: GeoJSONPathOptions = {
+          renderer,
           style: { color: alert ? CRITICAL : INK, weight: alert ? 2.2 : 1.3, fillColor: INK, fillOpacity: 0.05, dashArray: "5 3" },
-        });
+        };
+        shape = L.geoJSON(f.geometry as GeoJSON.GeoJsonObject, outline);
       } else {
         shape = L.circleMarker([f.latitude, f.longitude], { renderer, radius: 6.5, color: alert ? CRITICAL : INK, weight: 2.2, fillColor: "#ffffff", fillOpacity: 1 });
       }
       (shape as L.Path).bindTooltip(tooltip, { direction: "top", sticky: true });
-      shape.on("click", () => handlers.current.onSelectFacility?.(f.id));
+      shape.on("click", (event) => {
+        const dot = detectionAt(mapRef.current, detectionLayer.current, event.latlng, handlers.current.selectedId);
+        if (dot) {
+          L.DomEvent.stopPropagation(event.originalEvent);
+          handlers.current.onSelectDetection(dot);
+          return;
+        }
+        handlers.current.onSelectFacility?.(f.id);
+      });
       layer.addLayer(shape);
     }
+    raiseDots(detectionLayer.current);
   }, [props.facilities, props.layers.facilities]);
 
   // OpenStreetMap industrial features for the current view (only when zoomed in).
@@ -244,7 +310,8 @@ export function MapView(props: Props) {
           const data = await api.osmFeatures(`${b.getWest().toFixed(4)},${b.getSouth().toFixed(4)},${b.getEast().toFixed(4)},${b.getNorth().toFixed(4)}`);
           if (cancelled) return;
           layer.clearLayers();
-          L.geoJSON(data, {
+          const features: GeoJSONPathOptions = {
+            renderer,
             style: (feature) => {
               const color = CONTEXT_CATEGORY_META[feature?.properties?.category]?.color ?? "#555";
               return { color, weight: 1.2, fillColor: color, fillOpacity: 0.15 };
@@ -260,7 +327,8 @@ export function MapView(props: Props) {
                 { sticky: true },
               );
             },
-          }).addTo(layer);
+          };
+          L.geoJSON(data, features).addTo(layer);
           setOsmStatus(`${data.features.length} mapped features in view${data.truncated ? " (truncated)" : ""} · © OpenStreetMap contributors`);
         } catch {
           if (!cancelled) setOsmStatus("Could not load OpenStreetMap features");
@@ -291,7 +359,14 @@ export function MapView(props: Props) {
     layer.clearLayers();
     const selected = props.detections.find((d) => d.detection_id === props.selectedId);
     if (selected) {
-      L.circleMarker([selected.latitude, selected.longitude], { radius: 17, color: INK, weight: 2.4, fill: false, interactive: false }).addTo(layer);
+      L.circleMarker([selected.latitude, selected.longitude], {
+        renderer: rendererRef.current ?? undefined,
+        radius: 17,
+        color: INK,
+        weight: 2.4,
+        fill: false,
+        interactive: false,
+      }).addTo(layer);
     }
   }, [props.selectedId, props.detections]);
 

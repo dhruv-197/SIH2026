@@ -1,11 +1,13 @@
 """Background jobs: periodic NASA FIRMS ingestion and first-start bootstrap."""
 import logging
-from typing import Any, Dict
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, Optional
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from .config import settings
 from .db.database import SessionLocal
+from .db.models import IngestionRunModel
 from .pipeline.firms_client import fetch_area_api, fetch_public_feed, load_snapshot
 from .pipeline.service import service
 from .pipeline.settings_store import load_settings
@@ -37,6 +39,47 @@ async def sync_latest(trigger: str = "scheduler", mode: str = "auto", window: st
     return await service.ingest(rows, data_source, label, extra_details={"feeds": feeds, "trigger": trigger})
 
 
+def next_sync_at(last_finished: Optional[datetime], minutes: int, now: datetime) -> datetime:
+    """Next FIRMS fetch. A restart does not wait another full interval when the last fetch is already stale."""
+    interval = timedelta(minutes=minutes)
+    if last_finished is None:
+        return now + timedelta(seconds=5)
+    if last_finished.tzinfo is None:
+        last_finished = last_finished.replace(tzinfo=timezone.utc)
+    due = last_finished.astimezone(timezone.utc) + interval
+    if due <= now:
+        return now + timedelta(seconds=5)
+    return due
+
+
+def _last_success_at() -> Optional[datetime]:
+    with SessionLocal() as db:
+        row = (
+            db.query(IngestionRunModel)
+            .filter(IngestionRunModel.status == "succeeded", IngestionRunModel.finished_at.isnot(None))
+            .order_by(IngestionRunModel.id.desc())
+            .first()
+        )
+        if not row:
+            return None
+        return datetime.fromisoformat(row.finished_at)
+
+
+def _schedule_job(minutes: int) -> None:
+    when = next_sync_at(_last_success_at(), minutes, datetime.now(timezone.utc))
+    scheduler.add_job(
+        _scheduled_job,
+        "interval",
+        minutes=minutes,
+        id=JOB_ID,
+        replace_existing=True,
+        max_instances=1,
+        coalesce=True,
+        misfire_grace_time=minutes * 60,
+        next_run_time=when,
+    )
+
+
 async def _scheduled_job() -> None:
     try:
         result = await sync_latest("scheduler")
@@ -60,14 +103,13 @@ async def bootstrap_if_empty() -> None:
 def start() -> None:
     if scheduler.running:
         return
-    minutes = int(_settings()["auto_sync_interval_mins"])
-    scheduler.add_job(_scheduled_job, "interval", minutes=minutes, id=JOB_ID, replace_existing=True, max_instances=1, coalesce=True)
+    _schedule_job(int(_settings()["auto_sync_interval_mins"]))
     scheduler.start()
 
 
 def reschedule(minutes: int) -> None:
-    if scheduler.running and scheduler.get_job(JOB_ID):
-        scheduler.reschedule_job(JOB_ID, trigger="interval", minutes=int(minutes))
+    if scheduler.running:
+        _schedule_job(int(minutes))
 
 
 def next_run_time():

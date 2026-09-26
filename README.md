@@ -1,12 +1,73 @@
+<div align="center">
+
+<img src="frontend/public/favicon.svg" width="84" alt="GeoThermal Sentinel logo">
+
 # GeoThermal Sentinel
 
-Detection, classification and monitoring of **industrial heat sources and vegetation fires in India**, built on real
-NASA FIRMS active-fire detections, OpenStreetMap industrial geometry, ESA WorldCover land cover and Copernicus
-Sentinel-2 imagery. Two real datasets are bundled: the live near-real-time week (7–14 Sep 2026, monsoon) and an
-archive week from the fire season (24–30 Apr 2024), which shows crop and forest fires next to industry.
+**AI + GIS intelligence for industrial fires and persistent thermal sources across India**
 
-Built for the SIH 2026 problem statement *AI-Based Detection and Classification of Industrial Fires and Persistent
-Thermal Sources using NASA FIRMS, OSM & Satellite Data*:
+[![Smart India Hackathon 2026](https://img.shields.io/badge/Smart%20India%20Hackathon-2026-FF6F00)](#team)
+[![Problem statement](https://img.shields.io/badge/PS-SIH26162%20%C2%B7%20NTRO-0B5CAD)](#problem-statement-and-how-it-is-met)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](backend/requirements.txt)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](backend/app/main.py)
+[![React](https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white)](frontend/package.json)
+[![XGBoost](https://img.shields.io/badge/ML-XGBoost-EC6B23)](backend/ml/train.py)
+[![Leaflet](https://img.shields.io/badge/Map-Leaflet-199900?logo=leaflet&logoColor=white)](frontend/src/components/MapView.tsx)
+[![Tests](https://img.shields.io/badge/tests-83%20passing-2EA44F)](backend/tests)
+
+Smart India Hackathon 2026 · Problem Statement **SIH26162** (NTRO) · Team **SIT_Nexora** (Team ID 176133)
+
+</div>
+
+![GeoThermal Sentinel map: 956 NASA FIRMS detections in the Singrauli-Korba power and forest belt, each classified by heat source](docs/images/map.jpg)
+
+NASA FIRMS reports **where** it is hot, not **what** is burning: a refinery flare, a steel plant, a coal-seam fire, stubble
+burning and a forest fire all arrive as the same kind of hot pixel. **GeoThermal Sentinel** turns every FIRMS detection over
+India into a classified, explained and verified alert on a GIS map. It fuses NASA FIRMS with OpenStreetMap industry,
+ESA WorldCover land cover and Copernicus Sentinel-2 imagery, classifies each hotspot with XGBoost, remembers every site's
+normal heat and raises an alert only when something is abnormal.
+
+Two real datasets are bundled: the live near-real-time week (7–14 Sep 2026, monsoon) and an archive week from the fire
+season (24–30 Apr 2024), which shows crop and forest fires next to industry.
+
+## Contents
+
+- [Highlights](#highlights)
+- [Problem statement and how it is met](#problem-statement-and-how-it-is-met)
+- [Screenshots](#screenshots)
+- [Architecture](#architecture)
+- [Getting started](#getting-started)
+- [How a detection is classified](#how-a-detection-is-classified)
+- [Evaluation](#evaluation)
+- [From raw detections to decisions](#from-raw-detections-to-decisions)
+- [Analyst review and training labels](#analyst-review-and-training-labels)
+- [Focus regions and the archive week](#focus-regions-and-the-archive-week)
+- [GIS layer store and exports](#gis-layer-store-and-exports)
+- [Alerts, notifications and audit](#alerts-notifications-and-audit)
+- [Data sources: what is real, and what is not](#data-sources-what-is-real-and-what-is-not)
+- [Project layout](#project-layout)
+- [Limitations](#limitations)
+- [Team](#team)
+- [Attribution](#attribution)
+
+## Highlights
+
+| Highlight | What it means |
+| --- | --- |
+| **3,722 → 96** | FIRMS hotspots in one live week became 96 locations that need a person (2.6 %) |
+| **5 source types** | gas flare / oil & gas, heavy industry, mining / coal fire, wildfire, crop burning, from 30 observed features |
+| **99.3 %** | of recurring industrial heat on real FIRMS data still recognised with every map feature removed |
+| **11,143** | real NASA FIRMS detections analysed across a monsoon week and a fire-season week |
+| **Site baselines** | each persistent source is judged against its own heat history, so routine flares stay quiet |
+| **Fire-front tracking** | measures whether a vegetation fire is closing in on a refinery, power plant or mine |
+| **Sentinel-2 check** | SWIR heat and burn-scar tests confirm or question each incident, never override it |
+| **GIS ready** | OGC GeoPackage layer store for QGIS / ArcGIS, GeoJSON and CSV exports, live web map |
+| **83 tests** | automated tests for validation, features, alert policy, GIS store, API and permissions |
+
+## Problem statement and how it is met
+
+**SIH26162 – AI-Based Detection and Classification of Industrial Fires and Persistent Thermal Sources Using NASA FIRMS,
+OSM & Satellite Data** · National Technical Research Organisation (NTRO) · Theme: Disaster Management · Category: Software
 
 | Requirement | How it is met |
 | --- | --- |
@@ -15,25 +76,143 @@ Thermal Sources using NASA FIRMS, OSM & Satellite Data*:
 | Integrate thermal data, land cover, industrial databases and satellite imagery | NASA FIRMS VIIRS and MODIS detections; ESA WorldCover fractions as model features; OpenStreetMap industry plus a 37-site facility catalog; Sentinel-2 shortwave-infrared checks for heat and burn scars on every open incident; Open-Meteo wind at fires near plants. |
 | Monitor industrial fires and persistent thermal sources | FIRMS is polled every 3 hours; locations active on several days become persistent sources with FRP baselines and trends. Alerts carry reason codes and a versioned alert policy, measure whether a fire front is approaching a plant, and become incidents with a triage workflow, webhook notifications (Slack, Teams, SMS / email relay) and an audit log. |
 
----
+## Screenshots
 
-## What is real, and what is not
+| Overview: from raw detections to decisions | Detection detail: why this classification |
+| --- | --- |
+| ![Overview page with the detections-to-decisions funnel](docs/images/overview.jpg) | ![Detection drawer with class probabilities and model evidence](docs/images/drawer.jpg) |
+| **Incidents: a fire front approaching a coal mine** | **Model: accuracy and checks on real FIRMS data** |
+| ![Critical incident with reason codes, wind and Sentinel-2 check](docs/images/incidents.jpg) | ![Model page with held-out accuracy and real-data checks](docs/images/model.jpg) |
 
-| Component | Source | Notes |
-| --- | --- | --- |
-| Fire detections | NASA FIRMS VIIRS (Suomi NPP, NOAA-20, NOAA-21) and MODIS (Terra, Aqua) | Public near-real-time feed needs no key; a MAP_KEY enables the FIRMS area API. A 7-day snapshot (7–14 Sep 2026, 3,722 detections inside India) is bundled for offline demos. |
-| Archive week | NASA FIRMS yearly country files, standard processing (VIIRS Suomi NPP 375 m, MODIS 1 km) | 24–30 Apr 2024, 7,421 detections in the six focus regions, in a separate database (`run_archive_demo.bat`). The files carry NASA's static-source flag, used only to check the model. |
-| India boundary | Natural Earth 1:10m, India point of view | Detections outside India are dropped. |
-| Industrial context | OpenStreetMap via Overpass | 4,709 thermally relevant features with real element ids: 2,849 brick kilns, 844 mines, 401 thermal power plants, 239 coal mines, 120 steel works, 95 cement plants, 83 refineries, 37 oil/gas wells, 22 gas flares, others. |
-| Facility catalog | 37 nationally significant sites | Names/operators/states only - no invented operating values. 31 are matched to a real OSM element (e.g. Jamnagar -> `way/91585872`); the rest keep an approximate point and say so. |
-| Land cover | ESA WorldCover 10 m 2021 v200 (Microsoft Planetary Computer) | Class fractions inside each 375 m pixel footprint, cached in SQLite. Missing land cover is passed to the model as missing - never guessed. |
-| Satellite imagery | Sentinel-2 L2A, Landsat C2 L2, Sentinel-1 GRD (Planetary Computer STAC); NASA GIBS | Nearest real scenes around a detection with true-colour and SWIR chips, plus automatic Sentinel-2 heat and burn-scar measurements for open incidents. Not simultaneous with the FIRMS pass. |
-| Wind | Open-Meteo (weather-model analyses for recent days, ERA5 reanalysis for older dates) | Recorded for cross-alerts and on request; context for the analyst that never changes a classification or a severity. |
-| Classifier training data | **Physics-based simulation** | No public dataset labels Indian FIRMS detections by source type, so the model is trained on simulated detection streams (18 scenario families, including flaring upsets, accidental plant fires and green-belt fires on plant premises), calibrated to the radiometry of real detections, and then checked against real data (see Evaluation). |
-| Analyst labels | People using the review queue | Stored next to the model's output and exportable as training rows; none are bundled. |
-| Drills | Simulated detections | Clearly labelled `data_source = drill`, removable in one click. |
+Screenshots show the bundled archive week (24–30 Apr 2024).
 
----
+## Architecture
+
+```mermaid
+flowchart TD
+    FIRMS["NASA FIRMS<br/>VIIRS + MODIS hotspots"] --> ING["Ingest and validate<br/>every 3 hours, India only"]
+    ING --> FEAT["30 observed features<br/>heat, recurrence, surroundings, context, land cover"]
+    OSM["OpenStreetMap industry<br/>+ 37-site facility catalog"] --> FEAT
+    WC["ESA WorldCover<br/>10 m land cover"] --> FEAT
+    FEAT --> CLS["XGBoost classifier<br/>5 source types + SHAP explanations"]
+    CLS --> SRC["Persistent sources and fire events<br/>per-site heat baselines"]
+    SRC --> ALR["Alert rules<br/>abnormal heat, new heat at a plant, fire fronts"]
+    ALR --> VER["Satellite check<br/>SWIR heat and burn scar"]
+    S2["Copernicus Sentinel-2 L2A"] --> VER
+    CLS -. "uncertain" .-> REV["Analyst review queue<br/>labels become training rows"]
+    VER --> STORE[("SQLite + OGC GeoPackage")]
+    STORE --> UI["React + Leaflet GIS dashboard<br/>GeoJSON / CSV export"]
+    VER --> HOOK["Incidents + webhooks<br/>Slack, Teams, SMS relay"]
+
+    classDef data fill:#e8f1fd,stroke:#2563eb,color:#0f172a
+    classDef proc fill:#f3effd,stroke:#7c3aed,color:#0f172a
+    classDef out fill:#e9f7ef,stroke:#16a34a,color:#0f172a
+    classDef human fill:#fff7e6,stroke:#d97706,color:#0f172a
+    class FIRMS,OSM,WC,S2 data
+    class ING,FEAT,CLS,SRC,ALR,VER proc
+    class STORE,UI,HOOK out
+    class REV human
+```
+
+| Layer | Technologies |
+| --- | --- |
+| Backend | Python, FastAPI, Uvicorn, SQLAlchemy + SQLite, APScheduler, PyJWT |
+| AI / ML | XGBoost, scikit-learn (DBSCAN, BallTree, GroupKFold), TreeSHAP, NumPy, pandas, physics-based simulator |
+| Geospatial | Shapely, OGC GeoPackage, GeoJSON, NASA GIBS, Esri imagery |
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, Leaflet, Recharts |
+
+## Getting started
+
+**Prerequisites:** Python 3.10+ (tested with 3.14) and internet access for live data. Node.js 20.19+ or 22.12+ is only needed to change
+the frontend: the backend serves the prebuilt dashboard from `frontend/dist`.
+
+```bash
+git clone https://github.com/dhruv-197/SIH2026.git
+cd SIH2026
+python -m pip install -r backend/requirements.txt
+```
+
+On Windows, `py` works in place of `python`. `backend/requirements-lock.txt` lists the exact versions the project was
+tested with.
+
+**Live dashboard** (NASA FIRMS polled every 3 hours) – http://127.0.0.1:8000, API docs at http://127.0.0.1:8000/docs
+
+```bash
+cd backend
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+Windows: double-click `run_backend.bat`.
+
+**Archive week** (fire season, 24–30 Apr 2024, fixed dataset) – http://127.0.0.1:8001. It can run next to the live server.
+
+```bash
+cd backend
+GEOTHERMAL_DB_PATH=app/data/archive/2024-04-24/geothermal.db GEOTHERMAL_STATIC_DATASET=1 \
+GEOTHERMAL_DATASET_LABEL="Archive week 24 to 30 Apr 2024" \
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8001
+```
+
+Windows: double-click `run_archive_demo.bat`.
+
+**Frontend development** (hot reload, API proxied to port 8000) – http://localhost:5173
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+`start_all.bat` starts backend and frontend together on Windows. Rebuild the served dashboard with `npm run build`.
+
+**Tests**
+
+```bash
+python -m pytest backend/tests
+```
+
+Notes:
+
+- On an empty database the API loads the bundled FIRMS snapshot, fetches WorldCover land cover for every detection
+  location (a few minutes), runs the analysis and checks the resulting incidents against Sentinel-2. The scheduler
+  then polls FIRMS every 3 hours.
+- An open dashboard checks the API every minute and reloads its data after each sync, re-analysis or analyst label; if
+  the API cannot be reached, it keeps the last data on screen and says so.
+- Viewing is open. Actions need a role: **analyst** (sync data, upload CSV, triage incidents, label detections, read the
+  audit log) or **commander** (also settings, drills, test notifications). Demo passwords are `analyst-demo` /
+  `commander-demo`; set `ANALYST_PASSWORD`, `COMMANDER_PASSWORD` and `JWT_SECRET_KEY` for any real deployment.
+
+### Configuration
+
+| Variable | Purpose |
+| --- | --- |
+| `NASA_FIRMS_MAP_KEY` | Optional FIRMS MAP_KEY (can also be saved in Settings) |
+| `JWT_SECRET_KEY` | Signing key for sessions; without it sessions end when the server restarts |
+| `ANALYST_PASSWORD`, `COMMANDER_PASSWORD` | Replace the demo passwords |
+| `CORS_ORIGINS` | Comma-separated allowed browser origins (default localhost:5173) |
+| `GEOTHERMAL_DB_PATH` | SQLite file location |
+| `GEOTHERMAL_GIS_STORE_PATH` | GeoPackage layer store (default `gis/geothermal_sentinel.gpkg` next to the database) |
+| `GEOTHERMAL_FRONTEND_DIST` | Built dashboard served by the API (default `frontend/dist`) |
+| `GEOTHERMAL_OFFLINE=1` | No outbound network calls (land cover, imagery, wind and notifications report "unavailable") |
+| `GEOTHERMAL_STATIC_DATASET=1` | Serve a fixed dataset such as the archive week: no bootstrap, FIRMS polling, sync or upload |
+| `GEOTHERMAL_DATASET_LABEL` | Name of that dataset, shown as a banner in the dashboard |
+| `GEOTHERMAL_RETENTION_DAYS` | Initial retention window (default 45 days) |
+
+### Rebuilding data and the model
+
+```bash
+py backend/scripts/fetch_osm_industrial.py        # OpenStreetMap industrial extract (Overpass)
+py backend/scripts/prepare_india_boundary.py      # India boundary from Natural Earth
+py backend/scripts/match_catalog_to_osm.py        # match catalog facilities to OSM geometry
+py backend/ml/train.py                            # simulate, cross-validate and train the classifier
+py backend/scripts/build_dataset.py --source public-7d   # fresh 7-day FIRMS download + land cover + analysis
+py backend/ml/evaluate_real.py                    # real-data checks into the evaluation report
+py backend/scripts/build_archive_dataset.py --csv viirs-snpp_2024_India.csv --csv modis_2024_India.csv --start 2024-04-24
+py backend/ml/evaluate_real.py --db backend/app/data/archive/2024-04-24/geothermal.db --key archive_data_checks
+```
+
+Stop the API server before `build_dataset.py` (it recreates the database). The yearly country files for the archive week
+come from https://firms.modaps.eosdis.nasa.gov/country/ (`--count` prints detections per day and region to choose a week).
 
 ## How a detection is classified
 
@@ -90,7 +269,56 @@ Thermal Sources using NASA FIRMS, OSM & Satellite Data*:
 Emission estimates are given only for vegetation fires (Wooster et al. 2005 combustion rate; Andreae & Merlet 2001
 emission factors) and are instantaneous rates at the overpass.
 
----
+## Evaluation
+
+Full numbers are on the **Model and what-if** page and in `backend/ml/evaluation_report.json`.
+
+**Held-out simulated scenes** (GroupKFold by scene, 299,466 detections, 2,916 scenes, 18 scenario families):
+
+- Industrial vs vegetation accuracy 99.6 %; source-type accuracy 93.2 %, macro F1 0.935.
+- Hard cases are reported separately. Industrial-versus-vegetation accuracy is lowest for a vegetation fire inside
+  plant or mine premises (77 %), a flaring upset at an unmapped plant (81 %) and an accidental fire inside a mapped
+  plant (85 %). The weakest source type is a gas flare versus a heavy plant at a site not mapped in OSM (58 %, while
+  still 99.8 % correctly *industrial*).
+- These numbers show the method works when the simulation's physics holds. **They are not a field-validated accuracy.**
+
+**Checks on real FIRMS detections** (proxy labels from independent evidence, `ml/evaluate_real.py`):
+
+| Check | Live week, 7–14 Sep 2026 | Archive week, 24–30 Apr 2024 |
+| --- | --- | --- |
+| Recurring (≥ 3 days) detections inside mapped OSM industrial/mining sites -> industrial | 99.8 % of 1,276 (99.3 % with all map features removed) | 100 % of 803 (99.9 % with all map features removed) |
+| Single-day fires in ≥ 60 % forest or cropland, ≥ 10 km from mapped industry -> vegetation | 100 % of 465 (99.8 % with land cover removed) | 99.8 % of 3,518 (99.0 % with land cover removed) |
+| NASA's static-source flag (type 2, other static land source) -> shown as industrial | - (not in near-real-time data) | 98.8 % of 1,084 |
+| NASA's presumed vegetation fire (type 0) -> shown as vegetation | - | 96.5 % of 6,327 |
+
+The ablations show the model relies on persistence and radiometry, not just on the map. Proxy labels are biased
+towards clear-cut cases; they are evidence of consistency, not ground truth. NASA derives its flag from years of
+recurrence, independently of our maps and land cover; industrial sources without a long record stay "presumed
+vegetation" in it, so the last row mixes real disagreements with industrial heat NASA has not flagged.
+
+**What the archive week changed.** Its first analysis (model 2.1.0) called 187 detections in the Uttarakhand forest
+tile *mining / coal fire*: faint night-time pixels of spring forest fires. The simulator had kept vegetation fires at
+daytime intensity at night (median FRP about 2.2 MW, against 1.0 MW for real VIIRS night pixels over those forests),
+while its coal fires were fainter than real ones and sometimes sat under forest cover. Night-time fire behaviour and
+the land cover under coal fires were recalibrated to the distributions of real detections (`ml/simulator.py`), and
+model 2.2.0 was retrained on simulation alone - no real detection is a training label. Industrial labels in the
+Uttarakhand tile fell from 191 to 43, while Singrauli-Korba and Talcher-Angul kept the same counts (303 and 284);
+industrial labels more than 10 km from any mapped industry fell from 268 to 115, and agreement with NASA's
+presumed-vegetation flag rose from 94.1 % to 96.5 %. An acceptance test built from 51 real detections of one of those
+fires guards the case.
+
+**Automated tests:** `python -m pytest backend/tests` (83 tests) - record validation, feature integrity (records cannot
+inject features), same-overpass clustering, the verification policy, acceptance scenarios written by hand or taken from
+the FIRMS archive (first detections of forest fires, night fires, faint night pixels of a real forest fire in the
+Uttarakhand hills, crop burning, unmapped persistent flares, a steel plant with shifting hot spots, coal-fire fields, an
+advancing wildfire near a power plant, a one-night flaring upset inside a refinery, a grass fire in a plant's green belt,
+FRP excursions and new-activity alerts), reason codes and the alert policy version, the
+fire-front direction (including separate fires on different days, modelled on a real week), the wind's relation to a
+facility, fire-complex grouping, the attention funnel, GeoPackage structure and downloads, webhook payloads and
+delivery, Sentinel-2 band maths and verdicts, the database migration, the FIRMS polling schedule, and end-to-end API tests including permissions, an archive server refusing sync, uploads and drills,
+CSV validation and export, analyst reviews (append-only labels, the queue and the training export), the audit log, the
+drill-to-incident flow, an approaching fire front raising a critical alert, and automatic withdrawal and re-opening of
+alerts.
 
 ## From raw detections to decisions
 
@@ -139,8 +367,6 @@ fire complexes and 38 cross-alerts, 8 of them critical because the fire front wa
 with `run_archive_demo.bat` on http://127.0.0.1:8001; FIRMS polling, sync, uploads and drills are off there, and the live
 dashboard stays on port 8000.
 
----
-
 ## GIS layer store and exports
 
 After every analysis the API writes `backend/app/data/gis/geothermal_sentinel.gpkg`, an OGC GeoPackage 1.4 in WGS 84
@@ -172,118 +398,21 @@ An append-only **audit log** (Settings page, `GET /api/audit`, signed-in users) 
 and failed sign-ins, settings changes with before and after values and the resulting alert policy version, incident
 triage, analyst labels, drills, syncs, uploads and imagery re-checks.
 
----
+## Data sources: what is real, and what is not
 
-## Evaluation
-
-Full numbers are on the **Model and what-if** page and in `backend/ml/evaluation_report.json`.
-
-**Held-out simulated scenes** (GroupKFold by scene, 299,466 detections, 2,916 scenes, 18 scenario families):
-
-- Industrial vs vegetation accuracy 99.6 %; source-type accuracy 93.2 %, macro F1 0.935.
-- Hard cases are reported separately. Industrial-versus-vegetation accuracy is lowest for a vegetation fire inside
-  plant or mine premises (77 %), a flaring upset at an unmapped plant (81 %) and an accidental fire inside a mapped
-  plant (85 %). The weakest source type is a gas flare versus a heavy plant at a site not mapped in OSM (58 %, while
-  still 99.8 % correctly *industrial*).
-- These numbers show the method works when the simulation's physics holds. **They are not a field-validated accuracy.**
-
-**Checks on real FIRMS detections** (proxy labels from independent evidence, `ml/evaluate_real.py`):
-
-| Check | Live week, 7–14 Sep 2026 | Archive week, 24–30 Apr 2024 |
+| Component | Source | Notes |
 | --- | --- | --- |
-| Recurring (≥ 3 days) detections inside mapped OSM industrial/mining sites -> industrial | 99.8 % of 1,276 (99.3 % with all map features removed) | 100 % of 803 (99.9 % with all map features removed) |
-| Single-day fires in ≥ 60 % forest or cropland, ≥ 10 km from mapped industry -> vegetation | 100 % of 465 (99.8 % with land cover removed) | 99.8 % of 3,518 (99.0 % with land cover removed) |
-| NASA's static-source flag (type 2, other static land source) -> shown as industrial | - (not in near-real-time data) | 98.8 % of 1,084 |
-| NASA's presumed vegetation fire (type 0) -> shown as vegetation | - | 96.5 % of 6,327 |
-
-The ablations show the model relies on persistence and radiometry, not just on the map. Proxy labels are biased
-towards clear-cut cases; they are evidence of consistency, not ground truth. NASA derives its flag from years of
-recurrence, independently of our maps and land cover; industrial sources without a long record stay "presumed
-vegetation" in it, so the last row mixes real disagreements with industrial heat NASA has not flagged.
-
-**What the archive week changed.** Its first analysis (model 2.1.0) called 187 detections in the Uttarakhand forest
-tile *mining / coal fire*: faint night-time pixels of spring forest fires. The simulator had kept vegetation fires at
-daytime intensity at night (median FRP about 2.2 MW, against 1.0 MW for real VIIRS night pixels over those forests),
-while its coal fires were fainter than real ones and sometimes sat under forest cover. Night-time fire behaviour and
-the land cover under coal fires were recalibrated to the distributions of real detections (`ml/simulator.py`), and
-model 2.2.0 was retrained on simulation alone - no real detection is a training label. Industrial labels in the
-Uttarakhand tile fell from 191 to 43, while Singrauli-Korba and Talcher-Angul kept the same counts (303 and 284);
-industrial labels more than 10 km from any mapped industry fell from 268 to 115, and agreement with NASA's
-presumed-vegetation flag rose from 94.1 % to 96.5 %. An acceptance test built from 51 real detections of one of those
-fires guards the case.
-
-**Automated tests:** `py -m pytest backend/tests` (80 tests) - record validation, feature integrity (records cannot
-inject features), same-overpass clustering, the verification policy, acceptance scenarios written by hand or taken from
-the FIRMS archive (first detections of forest fires, night fires, faint night pixels of a real forest fire in the
-Uttarakhand hills, crop burning, unmapped persistent flares, a steel plant with shifting hot spots, coal-fire fields, an
-advancing wildfire near a power plant, a one-night flaring upset inside a refinery, a grass fire in a plant's green belt,
-FRP excursions and new-activity alerts), reason codes and the alert policy version, the
-fire-front direction (including separate fires on different days, modelled on a real week), the wind's relation to a
-facility, fire-complex grouping, the attention funnel, GeoPackage structure and downloads, webhook payloads and
-delivery, Sentinel-2 band maths and verdicts, the database migration, and end-to-end API tests including permissions, an archive server refusing sync, uploads and drills,
-CSV validation and export, analyst reviews (append-only labels, the queue and the training export), the audit log, the
-drill-to-incident flow, an approaching fire front raising a critical alert, and automatic withdrawal and re-opening of
-alerts.
-
----
-
-## Running it
-
-Prerequisites: Python 3.10+ (tested with 3.14) and internet access for live data. Node.js 18+ is only needed to change
-the frontend.
-
-```bash
-py -m pip install -r backend/requirements.txt
-```
-
-`backend/requirements-lock.txt` lists the exact versions the project was tested with.
-
-- **One process:** run `run_backend.bat` (or `cd backend && py -m uvicorn app.main:app --host 127.0.0.1 --port 8000`) and
-  open http://127.0.0.1:8000 - the API serves the prebuilt dashboard from `frontend/dist`. API docs: http://127.0.0.1:8000/docs
-- **Archive week:** run `run_archive_demo.bat` and open http://127.0.0.1:8001. It can run next to the live server.
-- **Frontend development:** `cd frontend && npm install && npm run dev`, then http://localhost:5173 (hot reload, API
-  proxied to port 8000). `start_all.bat` starts both. Rebuild the served dashboard with `npm run build`.
-- On an empty database the API loads the bundled FIRMS snapshot, fetches WorldCover land cover for every detection
-  location (a few minutes), runs the analysis and checks the resulting incidents against Sentinel-2. The scheduler
-  then polls FIRMS every 3 hours.
-- An open dashboard checks the API every minute and reloads its data after each sync, re-analysis or analyst label; if
-  the API cannot be reached, it keeps the last data on screen and says so.
-- Viewing is open. Actions need a role: **analyst** (sync data, upload CSV, triage incidents, label detections, read the
-  audit log) or **commander** (also settings, drills, test notifications). Demo passwords are `analyst-demo` / `commander-demo`.
-
-### Configuration
-
-| Variable | Purpose |
-| --- | --- |
-| `NASA_FIRMS_MAP_KEY` | Optional FIRMS MAP_KEY (can also be saved in Settings) |
-| `JWT_SECRET_KEY` | Signing key for sessions; without it sessions end when the server restarts |
-| `ANALYST_PASSWORD`, `COMMANDER_PASSWORD` | Replace the demo passwords |
-| `CORS_ORIGINS` | Comma-separated allowed browser origins (default localhost:5173) |
-| `GEOTHERMAL_DB_PATH` | SQLite file location |
-| `GEOTHERMAL_GIS_STORE_PATH` | GeoPackage layer store (default `gis/geothermal_sentinel.gpkg` next to the database) |
-| `GEOTHERMAL_FRONTEND_DIST` | Built dashboard served by the API (default `frontend/dist`) |
-| `GEOTHERMAL_OFFLINE=1` | No outbound network calls (land cover, imagery, wind and notifications report "unavailable") |
-| `GEOTHERMAL_STATIC_DATASET=1` | Serve a fixed dataset such as the archive week: no bootstrap, FIRMS polling, sync or upload |
-| `GEOTHERMAL_DATASET_LABEL` | Name of that dataset, shown as a banner in the dashboard |
-| `GEOTHERMAL_RETENTION_DAYS` | Initial retention window (default 45 days) |
-
-### Rebuilding data and the model
-
-```bash
-py backend/scripts/fetch_osm_industrial.py        # OpenStreetMap industrial extract (Overpass)
-py backend/scripts/prepare_india_boundary.py      # India boundary from Natural Earth
-py backend/scripts/match_catalog_to_osm.py        # match catalog facilities to OSM geometry
-py backend/ml/train.py                            # simulate, cross-validate and train the classifier
-py backend/scripts/build_dataset.py --source public-7d   # fresh 7-day FIRMS download + land cover + analysis
-py backend/ml/evaluate_real.py                    # real-data checks into the evaluation report
-py backend/scripts/build_archive_dataset.py --csv viirs-snpp_2024_India.csv --csv modis_2024_India.csv --start 2024-04-24
-py backend/ml/evaluate_real.py --db backend/app/data/archive/2024-04-24/geothermal.db --key archive_data_checks
-```
-
-Stop the API server before `build_dataset.py` (it recreates the database). The yearly country files for the archive week
-come from https://firms.modaps.eosdis.nasa.gov/country/ (`--count` prints detections per day and region to choose a week).
-
----
+| Fire detections | NASA FIRMS VIIRS (Suomi NPP, NOAA-20, NOAA-21) and MODIS (Terra, Aqua) | Public near-real-time feed needs no key; a MAP_KEY enables the FIRMS area API. A 7-day snapshot (7–14 Sep 2026, 3,722 detections inside India) is bundled for offline demos. |
+| Archive week | NASA FIRMS yearly country files, standard processing (VIIRS Suomi NPP 375 m, MODIS 1 km) | 24–30 Apr 2024, 7,421 detections in the six focus regions, in a separate database (`run_archive_demo.bat`). The files carry NASA's static-source flag, used only to check the model. |
+| India boundary | Natural Earth 1:10m, India point of view | Detections outside India are dropped. |
+| Industrial context | OpenStreetMap via Overpass | 4,709 thermally relevant features with real element ids: 2,849 brick kilns, 844 mines, 401 thermal power plants, 239 coal mines, 120 steel works, 95 cement plants, 83 refineries, 37 oil/gas wells, 22 gas flares, others. |
+| Facility catalog | 37 nationally significant sites | Names/operators/states only - no invented operating values. 31 are matched to a real OSM element (e.g. Jamnagar -> `way/91585872`); the rest keep an approximate point and say so. |
+| Land cover | ESA WorldCover 10 m 2021 v200 (Microsoft Planetary Computer) | Class fractions inside each 375 m pixel footprint, cached in SQLite. Missing land cover is passed to the model as missing - never guessed. |
+| Satellite imagery | Sentinel-2 L2A, Landsat C2 L2, Sentinel-1 GRD (Planetary Computer STAC); NASA GIBS | Nearest real scenes around a detection with true-colour and SWIR chips, plus automatic Sentinel-2 heat and burn-scar measurements for open incidents. Not simultaneous with the FIRMS pass. |
+| Wind | Open-Meteo (weather-model analyses for recent days, ERA5 reanalysis for older dates) | Recorded for cross-alerts and on request; context for the analyst that never changes a classification or a severity. |
+| Classifier training data | **Physics-based simulation** | No public dataset labels Indian FIRMS detections by source type, so the model is trained on simulated detection streams (18 scenario families, including flaring upsets, accidental plant fires and green-belt fires on plant premises), calibrated to the radiometry of real detections, and then checked against real data (see Evaluation). |
+| Analyst labels | People using the review queue | Stored next to the model's output and exportable as training rows; none are bundled. |
+| Drills | Simulated detections | Clearly labelled `data_source = drill`, removable in one click. |
 
 ## Project layout
 
@@ -313,8 +442,6 @@ Main API routes (all under `/api`): `health`, `detections` (+ `/export.geojson`,
 `gis/layers|geopackage|layers/{name}.geojson`, `ingestion/sync|runs`, `drills`, `reports/briefing`, `assistant/query`,
 `audit`, `settings` (+ `/firms-key/check`, `/test-alert`), `auth/login|me`. Interactive API documentation: `/docs`.
 
----
-
 ## Limitations
 
 - The classifier is trained on simulation and checked against proxy evidence; it has not been validated against
@@ -341,6 +468,16 @@ Main API routes (all under `/api`): `health`, `detections` (+ `/export.geojson`,
   verification with the operator and recent imagery. Notifications go to one webhook; connecting it to SMS, email or a
   control room is part of the deployment.
 - The query assistant is rule-based and answers only from stored data.
+
+## Team
+
+| Team | SIT_Nexora |
+| --- | --- |
+| **Team ID** | 176133 |
+| **Problem statement** | SIH26162 – AI-Based Detection and Classification of Industrial Fires and Persistent Thermal Sources Using NASA FIRMS, OSM & Satellite Data |
+| **Organisation** | National Technical Research Organisation (NTRO) |
+| **Theme / category** | Disaster Management / Software |
+| **Event** | Smart India Hackathon 2026 |
 
 ## Attribution
 
